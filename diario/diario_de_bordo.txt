@@ -1,0 +1,117 @@
+📘 Diário de Bordo
+
+📅 26/03
+🔍 Atividades
+Pesquisas para validar a criação de um software de auxílio financeiro para jovens
+Organização dos arquivos na pasta IDEIA-2 (contendo materiais da pesquisa)
+👥 Contribuição
+Daniel
+Matheus
+Murilo
+Vinicius
+
+📅 27/03
+🔍 Atividades
+Call em grupo para alinhamento dos problemas (1h30min)
+Pesquisas realizadas após mudança do tema
+Definição da data de entrega das problemáticas: 30/03
+
+👥 Contribuição
+Daniel
+Matheus
+Murilo
+Vinicius
+
+📅 30/03
+🔍 Atividades
+Call em grupo (1h) (Matheus não participou)
+Entrega das problemáticas
+Definição de nova problemática:
+Gestão de estoque e armazém em pequenas empresas
+Afunilamento do problema
+Início da busca por artigos para comprovação do problema
+📌 Prazo: 31/03
+
+👥 Contribuição na entrega
+Daniel
+Matheus
+Murilo
+Vinicius
+
+📅 31/03
+🔍 Atividades
+Entrega de artigos acadêmicos (TCC) para comprovação do problema
+Levantamento de leis relacionadas ao problema
+Call com Matheus e Vinicius (40min)
+
+👥 Contribuição
+Daniel
+Matheus
+Murilo
+Vinicius
+
+📅 01/04
+🔍 Atividades
+Produção do slide de pitch por Daniel
+
+📅 02/04
+🔍 Atividades
+Presença em aula
+Conversa com o professor Villar para alinhamento das problemáticas
+⚠️ Problemas Definidos
+Problema 1:
+Realizar a separação de produtos no estoque (físico e virtual), visando controle de entrada e saída
+Problema 2:
+Rastreamento de clientes utilizando métodos de captura de dados
+🔎 Pesquisa de Campo
+Responsável: Matheus
+
+👥 Participantes
+Daniel
+Matheus
+Murilo
+Vinicius
+
+📅 05/04
+🔍 Atividades
+Conversa direta com o Sr. Ubijara dono da Empresa Fama Fashion para esclarecer o problema
+e propor soluções relevantes. Pós isso, foi realizada uma análise e proposta formal descrita
+no word.
+
+👥 Contribuição
+Daniel
+Matheus
+Murilo
+Vinicius
+
+📅 07/04
+🔍 Atividades
+Criação do esboço das telas do projeto e viabilização via slides no Canva. A insfraestutura
+foi pensanda especialmente para ser de simples manuseio e acessível, propondo assim qualidade 
+e principalmente organização.
+Para auxiliar ainda mais no processo de gestão do estoque e métricas da empresa pensamos em 
+adicionar um chatbot que será responsável por contribuir com propostas de melhorias e metologias
+agéis e eficientes para melhorar e agilizar os processos.
+
+👥 Contribuição
+Daniel
+Matheus
+Vinicius
+
+📅 16/04
+🔍 Atividades
+Conversa com Instrutor de Tcc(Davi) para alinhar o desenovlvimento.
+Foi conversado sobre a mudança de um projeto de gerenciamento, para um de análise
+de estoque com integração de IA e geração de dashboards.
+Por fim, realizamos pesquisas sobre e analisamos alguns vídeos,
+
+👥 Contribuição
+Vinícius
+Murilo
+
+📅 18/04
+🔍 Atividades
+Organização do Repositório de TCC, criação de Readme e pesquisas sobre IA.
+
+👥 Contribuição
+Vinicius
