@@ -1,127 +1,179 @@
-# 📦 Sistema ERP para Gestão de Estoque e Produção
+
+Perfeito — então o README deve refletir um projeto **em fase de concepção**, sem sugerir implementação pronta. Aqui vai uma versão mais adequada, com foco na proposta do TCC:
+
+----------
+
+# 📊 Sistema Inteligente de Análise de Estoque
 
 ## 📌 Descrição do Projeto
 
-Este repositório contém o desenvolvimento de um **Sistema ERP (Enterprise Resource Planning)** voltado para a **gestão integrada de estoque, produção e pedidos B2B**.
+Este repositório contém a proposta de desenvolvimento de um sistema inteligente para análise e gestão de estoque, elaborado como Trabalho de Conclusão de Curso (TCC).
 
-O projeto está sendo desenvolvido como Trabalho de Conclusão de Curso (TCC) com o objetivo de solucionar problemas reais enfrentados por organizações que operam com processos manuais e descentralizados.
+O projeto tem como foco uma confecção de roupas femininas de pequeno porte, que atua na produção e comercialização de peças por diferentes canais de venda.
 
----
+Atualmente, o repositório contempla a definição do problema, o contexto organizacional e a proposta de solução. A implementação do sistema será realizada em etapas futuras.
 
-## 🎯 Objetivo
+----------
 
-Desenvolver um sistema capaz de:
+## 🏭 Contexto da Empresa
 
-* Centralizar o controle de estoque em tempo real
-* Automatizar o fluxo de produção
-* Digitalizar e padronizar pedidos B2B
-* Integrar múltiplos canais de venda
-* Reduzir erros operacionais e retrabalho
+A empresa analisada é uma confecção familiar que:
 
----
+-   Produz cerca de 15 modelos de roupas femininas
+    
+-   Trabalha com costureiros terceirizados
+    
+-   Atua em múltiplos canais de venda:
+    
+    -   Revendedores
+        
+    -   Loja física própria
+        
+    -   Loja online (recente expansão)
+        
 
-## ⚠️ Problemas Identificados
+### 🔄 Processo Produtivo
 
-### 🔴 Falta de sincronização de estoque
+1.  Compra de tecidos
+    
+2.  Corte das peças
+    
+3.  Envio para costureiros parceiros
+    
+4.  Retorno das peças prontas
+    
+5.  Organização e distribuição
+    
 
-* Controle descentralizado
-* Ausência de atualização em tempo real
-* Risco de vendas duplicadas
+Parte da produção é destinada a revendedores, enquanto outra parte abastece a loja própria.
 
-### 🔴 Ineficiência no fluxo de pedidos B2B
+----------
 
-* Processos manuais
-* Falta de padronização
-* Perda de informações importantes
+## ⚠️ Problema Identificado
 
-### 🔴 Baixa eficiência operacional
+Com a expansão para o ambiente digital e o aumento dos canais de venda, a empresa passou a enfrentar dificuldades na gestão do estoque.
 
-* Alto índice de processos manuais (~90%)
-* Falta de integração entre estoque e produção
-* Dificuldade no planejamento produtivo
+Os principais problemas incluem:
 
----
+-   Falta de controle na separação de produtos por canal
+    
+-   Incerteza sobre disponibilidade real de estoque
+    
+-   Risco de venda de itens indisponíveis
+    
+-   Registro pouco estruturado de entradas e saídas
+    
+-   Dificuldade na análise de dados históricos
+    
 
-## 💡 Solução Proposta
+Além disso, a ausência de ferramentas analíticas faz com que decisões sejam tomadas com base em experiência empírica, o que pode gerar:
 
-Implementação de um sistema ERP com os seguintes módulos:
+-   Excesso ou falta de estoque
+    
+-   Distribuição inadequada de produtos
+    
+-   Perdas financeiras
+    
 
-### 📊 1. Controle de Estoque Unificado
+----------
 
-* Base de dados centralizada
-* Registro de entradas, saídas e transferências
-* Controle por SKU ou código de barras
-* Reserva automática de produtos por canal
+## 💡 Proposta de Solução
 
----
+Propõe-se o desenvolvimento de um **Sistema Inteligente de Análise de Estoque**, com foco em organização, análise e suporte à tomada de decisão.
 
-### 🏭 2. Módulo de Produção
+A solução será baseada em:
 
-* Fichas técnicas digitais
-* Cadastro de matéria-prima
-* Cálculo automático de rendimento
-* Geração de ordens de produção
-* Monitoramento em tempo real
+### 📦 Estrutura de Dados
 
----
+-   Utilização de banco de dados para armazenamento estruturado
+    
+-   Registro eficiente de entradas e saídas de produtos
+    
+-   Controle por canal de venda
+    
 
-### 🧾 3. Gestão de Pedidos B2B
+### 🤖 Uso de Inteligência Artificial
 
-* Formulários padronizados
-* Registro completo de pedidos
-* Controle de status (recebido, produção, finalizado)
-* Rastreabilidade e auditoria
+-   Análise automática de dados históricos
+    
+-   Identificação de padrões de consumo
+    
+-   Comparação entre períodos de venda
+    
+-   Geração de insights estratégicos
+    
 
----
+### 📊 Visualização de Dados
 
-### 🔗 4. Integração com Canais de Venda
+-   Desenvolvimento de dashboard interativo
+    
+-   Apresentação clara e organizada das informações
+    
+-   Acompanhamento do desempenho dos produtos
+    
 
-* Integração via APIs
-* Sincronização automática de estoque
-* Atualização em tempo real
-* Redução de inconsistências
+----------
 
----
+## 🎯 Objetivos do Projeto
 
-## 🏗️ Tecnologias (Previstas)
+-   Melhorar o controle de estoque
+    
+-   Reduzir erros operacionais
+    
+-   Organizar os dados da empresa
+    
+-   Apoiar decisões com base em dados
+    
+-   Identificar padrões e tendências de venda
+    
 
-> *(Podem ser ajustadas ao longo do desenvolvimento)*
+----------
 
-* Frontend: HTML, CSS, JavaScript
-* Backend: Python / Node.js
-* Banco de Dados: MySQL
-* Versionamento: Git e GitHub
-* Integrações: APIs REST
+## 🚧 Status do Projeto
 
----
+📌 **Fase atual:** Levantamento de requisitos e definição da proposta
 
-## 📈 Benefícios Esperados
+Etapas futuras:
 
-* Aumento da eficiência operacional
-* Redução de erros humanos
-* Melhor controle de estoque
-* Otimização da produção
-* Maior confiabilidade dos dados
+-   Modelagem do banco de dados
+    
+-   Desenvolvimento do sistema
+    
+-   Implementação das análises com IA
+    
+-   Criação do dashboard
+    
+-   Testes e validação
+    
 
----
+----------
 
-## 🚀 Status do Projeto
+## 🔮 Resultados Esperados
 
-🟡 Em desenvolvimento (TCC)
+Espera-se que o sistema permita:
 
----
+-   Maior controle sobre o estoque
+    
+-   Melhor distribuição entre canais de venda
+    
+-   Redução de perdas financeiras
+    
+-   Apoio estratégico na tomada de decisão
+    
+    
 
-## 👨‍💻 Equipe
+----------
 
-* Vinícius Oliveira Dinis Dias
-* Daniel Romão Lasinskas
-* Matheus de Moura Holanda
-* Murilo Rodrigues Viegas
+## 📄 Observação
 
----
+Este repositório está em fase inicial e não contém implementação de código até o momento. Seu objetivo atual é documentar a proposta e servir como base para o desenvolvimento futuro do sistema.
 
-## 📌 Considerações Finais
+----------
 
-Este projeto visa aplicar conceitos de desenvolvimento de sistemas em um cenário real, propondo uma solução robusta e escalável para gestão empresarial.
+Se quiser, posso depois evoluir isso para:
 
----
+-   versão pronta pra banca (mais formal/ABNT)
+    
+-   versão estilo GitHub profissional
+    
+-   ou já preparar a próxima etapa (requisitos + diagramas UML)
