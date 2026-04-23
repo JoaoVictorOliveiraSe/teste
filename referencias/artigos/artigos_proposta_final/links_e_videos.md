@@ -14,7 +14,6 @@
     
 
  - https://wjarr.com/sites/default/files/fulltext_pdf/WJARR-2024-2394.pdf
-   file:///C:/Users/CAMARGO/Downloads/Artificial_Intelligence-Driven_Inventory_Managemen.pdf
 
 ----------------------------------------------------------
 
