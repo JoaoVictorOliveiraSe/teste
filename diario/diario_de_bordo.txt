@@ -115,3 +115,23 @@ Organização do Repositório de TCC, criação de Readme e pesquisas sobre IA.
 
 👥 Contribuição
 Vinicius
+
+📅 20/04
+🔍 Atividades
+Pesquisa de campo, alinhando novas possiveis soluções; Apresentação das futuras telas para o cliente (devolutiva satisfatória);
+Pesquisas sobre Inteligência Artificial aplicada a análise de estoque;
+Pesquisa sobre estruturas de banco de dados apropriadas para o nosso projeto
+
+👥 Contribuição
+Matheus
+Daniel
+Vinicius
+Murilo
+
+📅 22/04
+🔍 Atividades 
+Call realizada para fazer essa documentação inicial e discutir um pouco sobre a pesquisa de campo ( 35 min )
+
+👥 Contribuição
+Daniel 
+Matheus
