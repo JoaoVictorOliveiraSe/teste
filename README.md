@@ -1,8 +1,3 @@
-
-Perfeito — então o README deve refletir um projeto **em fase de concepção**, sem sugerir implementação pronta. Aqui vai uma versão mais adequada, com foco na proposta do TCC:
-
-----------
-
 # 📊 Sistema Inteligente de Análise de Estoque
 
 ## 📌 Descrição do Projeto
@@ -14,6 +9,16 @@ O projeto tem como foco uma confecção de roupas femininas de pequeno porte, qu
 Atualmente, o repositório contempla a definição do problema, o contexto organizacional e a proposta de solução. A implementação do sistema será realizada em etapas futuras.
 
 ----------
+
+## 👥 Contribuidores
+
+Daniel Romão Gonçalves Lasinskas
+Matheus de Moura Holanda
+Murilo Rodrigues Veroneze Viegas
+Vinícius Oliveira Dinis Dias
+
+----------
+
 
 ## 🏭 Contexto da Empresa
 
@@ -162,18 +167,3 @@ Espera-se que o sistema permita:
     
     
 
-----------
-
-## 📄 Observação
-
-Este repositório está em fase inicial e não contém implementação de código até o momento. Seu objetivo atual é documentar a proposta e servir como base para o desenvolvimento futuro do sistema.
-
-----------
-
-Se quiser, posso depois evoluir isso para:
-
--   versão pronta pra banca (mais formal/ABNT)
-    
--   versão estilo GitHub profissional
-    
--   ou já preparar a próxima etapa (requisitos + diagramas UML)
