@@ -144,3 +144,66 @@ Definição das tecnologias que serão utilizadas:
 Node.js + Express no backend;
 PostgreSQL ou MySQL no banco;
 API de IA pronta.)
+
+## 2° Bimestre
+
+📅 26/04
+🔍 Atividades 
+Realização do esboço do frontend, com o auxílio da ferramenta figma ( resultado não foi exatamente o que queriamos, ficamos de corrigi-lo)
+
+👥 Contribuição
+Daniel 
+Vinícius
+
+📅 01/05
+🔍 Atividades 
+Finalização das telas no figma, adicionando as melhorias previstas;
+
+👥 Contribuição
+Daniel 
+Vinícius
+Matheus
+
+📅 03/05
+🔍 Atividades 
+Inicialização do Frontend do projeto com código utilizando React.
+
+👥 Contribuição
+Murilo 
+Vinícius
+
+📅 07/05
+🔍 Atividades 
+Aprimoramento da estrutura do projeto utilizando arquitetura moderna do React;
+Continuação da documentação base do projeto e escolha da estrutura de banco ideal.
+
+👥 Contribuição
+Murilo 
+Vinícius
+Daniel
+Matheus
+
+📅 10/05
+🔍 Atividades 
+Criação do DER e MER base do projeto 
+
+👥 Contribuição
+Daniel
+Matheus
+
+📅 14/05
+🔍 Atividades 
+Realização da programação dos ensaios para apresentação do dia 18/06;
+Alinhamento de metas futuras;
+Definição de datas para entrega. Pretendemos continuar o desenvolvimento do Frontend e começar a criação do banco (para dia 17/07)
+
+👥 Contribuição
+Daniel
+Matheus
+Vinicius 
+
+
+
+
+
+
