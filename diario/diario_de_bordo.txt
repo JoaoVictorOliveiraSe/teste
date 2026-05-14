@@ -135,3 +135,12 @@ Call realizada para fazer essa documentação inicial e discutir um pouco sobre 
 👥 Contribuição
 Daniel 
 Matheus
+
+📅23/04
+🔍 Atividades 
+Em sala de aula continuação da busca para a melhor opção de estrutura de banco (não definida);
+Definição das tecnologias que serão utilizadas:
+(React no front;
+Node.js + Express no backend;
+PostgreSQL ou MySQL no banco;
+API de IA pronta.)
