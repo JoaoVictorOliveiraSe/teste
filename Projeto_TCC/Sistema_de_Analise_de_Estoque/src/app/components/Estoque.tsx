@@ -1,67 +1,203 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
-import { ArrowUpCircle, ArrowDownCircle, Store, Laptop, Users, Package } from "lucide-react";
-import { Badge } from "./ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "./ui/dialog";
+import { Skeleton } from "./ui/skeleton";
+import {
+  ArrowUpCircle, ArrowDownCircle, Store, Laptop, Users, Package,
+  RefreshCw, AlertTriangle, ArrowLeftRight,
+} from "lucide-react";
+import { toast } from "sonner";
+import { useEstoqueStore } from "../../store/estoqueStore";
+import { useProdutosStore } from "../../store/produtosStore";
+import type { CreateMovimentacaoDto, TipoMovimentacao, Canal } from "../../types";
 
-interface MovimentacaoEstoque {
-  id: number;
-  tipo: "entrada" | "saida";
-  produto: string;
-  quantidade: number;
-  canal: string;
-  data: string;
-  responsavel: string;
+const CANAL_ICONS: Record<string, React.ElementType> = {
+  LOJA_FISICA: Store,
+  ONLINE: Laptop,
+  REVENDEDORES: Users,
+  PRODUCAO: Package,
+};
+
+const CANAL_COLORS: Record<string, string> = {
+  LOJA_FISICA: "bg-purple-500",
+  ONLINE: "bg-blue-500",
+  REVENDEDORES: "bg-green-500",
+  PRODUCAO: "bg-orange-500",
+};
+
+const TIPO_LABEL: Record<string, string> = {
+  ENTRADA: "Entrada",
+  SAIDA: "Saída",
+  TRANSFERENCIA: "Transferência",
+  AJUSTE: "Ajuste",
+};
+
+function MovimentacaoForm({ onSalvar, onClose }: {
+  onSalvar: (dto: CreateMovimentacaoDto) => Promise<void>;
+  onClose: () => void;
+}) {
+  const { locais } = useEstoqueStore();
+  const { produtos } = useProdutosStore();
+  const [salvando, setSalvando] = useState(false);
+  const [form, setForm] = useState<CreateMovimentacaoDto>({
+    tipo: "ENTRADA",
+    produtoId: "",
+    localDestinoId: "",
+    quantidade: 1,
+    observacao: "",
+  });
+
+  const handleSalvar = async () => {
+    if (!form.produtoId || !form.quantidade) {
+      toast.error("Produto e quantidade são obrigatórios");
+      return;
+    }
+    setSalvando(true);
+    try {
+      await onSalvar(form);
+      toast.success("Movimentação registrada!");
+      onClose();
+    } catch (e: any) {
+      toast.error(e.response?.data?.message ?? "Erro ao registrar movimentação");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  const isEntrada = form.tipo === "ENTRADA";
+  const isSaida = form.tipo === "SAIDA";
+
+  return (
+    <div className="space-y-4 mt-2">
+      <div>
+        <Label>Tipo *</Label>
+        <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v as TipoMovimentacao })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="ENTRADA">Entrada</SelectItem>
+            <SelectItem value="SAIDA">Saída</SelectItem>
+            <SelectItem value="TRANSFERENCIA">Transferência</SelectItem>
+            <SelectItem value="AJUSTE">Ajuste</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div>
+        <Label>Produto *</Label>
+        <Select value={form.produtoId} onValueChange={(v) => setForm({ ...form, produtoId: v })}>
+          <SelectTrigger>
+            <SelectValue placeholder="Selecione o produto" />
+          </SelectTrigger>
+          <SelectContent>
+            {produtos.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.nome} ({p.sku})</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {(isSaida || form.tipo === "TRANSFERENCIA") && (
+        <div>
+          <Label>Local de Origem *</Label>
+          <Select value={form.localOrigemId ?? ""} onValueChange={(v) => setForm({ ...form, localOrigemId: v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o local de origem" />
+            </SelectTrigger>
+            <SelectContent>
+              {locais.map((l) => (
+                <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {(isEntrada || form.tipo === "TRANSFERENCIA") && (
+        <div>
+          <Label>Local de Destino *</Label>
+          <Select value={form.localDestinoId ?? ""} onValueChange={(v) => setForm({ ...form, localDestinoId: v })}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione o local de destino" />
+            </SelectTrigger>
+            <SelectContent>
+              {locais.map((l) => (
+                <SelectItem key={l.id} value={l.id}>{l.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div>
+        <Label>Quantidade *</Label>
+        <Input
+          type="number"
+          min="1"
+          value={form.quantidade}
+          onChange={(e) => setForm({ ...form, quantidade: Number(e.target.value) })}
+        />
+      </div>
+
+      <div>
+        <Label>Observação</Label>
+        <Input
+          placeholder="Opcional"
+          value={form.observacao}
+          onChange={(e) => setForm({ ...form, observacao: e.target.value })}
+        />
+      </div>
+
+      <div className="flex gap-3 pt-2">
+        <Button variant="outline" onClick={onClose} className="flex-1">Cancelar</Button>
+        <Button onClick={handleSalvar} disabled={salvando} className="flex-1 bg-blue-500 hover:bg-blue-600">
+          {salvando ? "Registrando..." : "Registrar"}
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function Estoque() {
-  const [movimentacoes, setMovimentacoes] = useState<MovimentacaoEstoque[]>([
-    { id: 1, tipo: "entrada", produto: "Vestido Floral", quantidade: 50, canal: "Produção", data: "2026-04-20", responsavel: "João Silva" },
-    { id: 2, tipo: "saida", produto: "Blusa Básica", quantidade: 15, canal: "Loja Física", data: "2026-04-20", responsavel: "Maria Santos" },
-    { id: 3, tipo: "saida", produto: "Saia Midi", quantidade: 8, canal: "Online", data: "2026-04-21", responsavel: "Sistema" },
-    { id: 4, tipo: "saida", produto: "Calça Jeans", quantidade: 12, canal: "Revendedores", data: "2026-04-21", responsavel: "Pedro Costa" },
-    { id: 5, tipo: "entrada", produto: "Vestido Longo", quantidade: 30, canal: "Produção", data: "2026-04-22", responsavel: "João Silva" },
-    { id: 6, tipo: "saida", produto: "Blusa Estampada", quantidade: 20, canal: "Online", data: "2026-04-22", responsavel: "Sistema" },
-    { id: 7, tipo: "saida", produto: "Saia Plissada", quantidade: 6, canal: "Loja Física", data: "2026-04-23", responsavel: "Maria Santos" },
-  ]);
+  const {
+    movimentacoes, locais, carregando, erro,
+    carregarMovimentacoes, carregarLocais, registrarMovimentacao,
+  } = useEstoqueStore();
+  const { carregarProdutos } = useProdutosStore();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [abaAtiva, setAbaAtiva] = useState("todas");
 
-  const [novaMovimentacao, setNovaMovimentacao] = useState({
-    tipo: "entrada" as "entrada" | "saida",
-    produto: "",
-    quantidade: 0,
-    canal: "",
-    responsavel: "",
-  });
+  useEffect(() => {
+    carregarLocais();
+    carregarMovimentacoes();
+    carregarProdutos();
+  }, []);
 
-  const estoqueCanais = [
-    { canal: "Loja Física", total: 342, icon: Store, color: "bg-purple-500" },
-    { canal: "Online", total: 589, icon: Laptop, color: "bg-blue-500" },
-    { canal: "Revendedores", total: 316, icon: Users, color: "bg-green-500" },
-  ];
-
-  const handleAddMovimentacao = () => {
-    const nova: MovimentacaoEstoque = {
-      id: movimentacoes.length + 1,
-      ...novaMovimentacao,
-      data: new Date().toISOString().split('T')[0],
-    };
-    setMovimentacoes([nova, ...movimentacoes]);
-    setNovaMovimentacao({
-      tipo: "entrada",
-      produto: "",
-      quantidade: 0,
-      canal: "",
-      responsavel: "",
-    });
+  const handleSalvar = async (dto: CreateMovimentacaoDto) => {
+    await registrarMovimentacao(dto);
+    carregarMovimentacoes();
   };
 
-  const movimentacoesEntrada = movimentacoes.filter((m) => m.tipo === "entrada");
-  const movimentacoesSaida = movimentacoes.filter((m) => m.tipo === "saida");
+  const filtradas = movimentacoes.filter((m) => {
+    if (abaAtiva === "todas") return true;
+    if (abaAtiva === "entradas") return m.tipo === "ENTRADA";
+    if (abaAtiva === "saidas") return m.tipo === "SAIDA";
+    return true;
+  });
+
+  const tipoConfig = {
+    ENTRADA: { icon: ArrowUpCircle, color: "text-green-600", bg: "bg-green-100", badgeVariant: "default" as const },
+    SAIDA: { icon: ArrowDownCircle, color: "text-red-600", bg: "bg-red-100", badgeVariant: "destructive" as const },
+    TRANSFERENCIA: { icon: ArrowLeftRight, color: "text-blue-600", bg: "bg-blue-100", badgeVariant: "secondary" as const },
+    AJUSTE: { icon: Package, color: "text-orange-600", bg: "bg-orange-100", badgeVariant: "outline" as const },
+  };
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
@@ -71,188 +207,120 @@ export function Estoque() {
             <h2 className="text-3xl font-bold text-gray-800">Controle de Estoque</h2>
             <p className="text-gray-600 mt-1">Gerencie entradas e saídas por canal</p>
           </div>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                <Package className="w-4 h-4 mr-2" />
-                Nova Movimentação
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Registrar Movimentação</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div>
-                  <Label>Tipo</Label>
-                  <Select
-                    value={novaMovimentacao.tipo}
-                    onValueChange={(value) => setNovaMovimentacao({ ...novaMovimentacao, tipo: value as "entrada" | "saida" })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="entrada">Entrada</SelectItem>
-                      <SelectItem value="saida">Saída</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Produto</Label>
-                  <Input
-                    placeholder="Nome do produto"
-                    value={novaMovimentacao.produto}
-                    onChange={(e) => setNovaMovimentacao({ ...novaMovimentacao, produto: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Quantidade</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={novaMovimentacao.quantidade}
-                    onChange={(e) => setNovaMovimentacao({ ...novaMovimentacao, quantidade: Number(e.target.value) })}
-                  />
-                </div>
-                <div>
-                  <Label>Canal</Label>
-                  <Select
-                    value={novaMovimentacao.canal}
-                    onValueChange={(value) => setNovaMovimentacao({ ...novaMovimentacao, canal: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o canal" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Produção">Produção</SelectItem>
-                      <SelectItem value="Loja Física">Loja Física</SelectItem>
-                      <SelectItem value="Online">Online</SelectItem>
-                      <SelectItem value="Revendedores">Revendedores</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Responsável</Label>
-                  <Input
-                    placeholder="Nome do responsável"
-                    value={novaMovimentacao.responsavel}
-                    onChange={(e) => setNovaMovimentacao({ ...novaMovimentacao, responsavel: e.target.value })}
-                  />
-                </div>
-                <Button onClick={handleAddMovimentacao} className="w-full bg-blue-500 hover:bg-blue-600">
-                  Registrar Movimentação
+          <div className="flex gap-3">
+            <Button onClick={() => carregarMovimentacoes()} variant="outline" disabled={carregando}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${carregando ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                  <Package className="w-4 h-4 mr-2" />
+                  Nova Movimentação
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Registrar Movimentação</DialogTitle>
+                </DialogHeader>
+                <MovimentacaoForm onSalvar={handleSalvar} onClose={() => setDialogOpen(false)} />
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          {estoqueCanais.map((canal, index) => {
-            const Icon = canal.icon;
-            return (
-              <Card key={index} className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className={`p-4 rounded-lg ${canal.color}`}>
-                    <Icon className="w-8 h-8 text-white" />
+        {/* Cards por local */}
+        {locais.length > 0 && (
+          <div className={`grid grid-cols-1 md:grid-cols-${Math.min(locais.length, 4)} gap-6 mb-8`}>
+            {locais.map((local) => {
+              const Icon = CANAL_ICONS[local.tipo] ?? Store;
+              const color = CANAL_COLORS[local.tipo] ?? "bg-gray-500";
+              const totalLocal = movimentacoes
+                .filter((m) => m.localDestino?.id === local.id || m.localOrigem?.id === local.id)
+                .length;
+              return (
+                <Card key={local.id} className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className={`p-4 rounded-lg ${color}`}>
+                      <Icon className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-gray-600 text-sm">{local.nome}</p>
+                      <p className="text-2xl font-bold text-gray-800">
+                        {local._count?.estoques ?? 0}
+                      </p>
+                      <p className="text-gray-500 text-xs">itens cadastrados</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-gray-600 text-sm">{canal.canal}</p>
-                    <p className="text-3xl font-bold text-gray-800">{canal.total}</p>
-                    <p className="text-gray-500 text-sm">unidades</p>
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
+        {/* Movimentações */}
         <Card className="p-6">
-          <Tabs defaultValue="todas">
+          <Tabs value={abaAtiva} onValueChange={setAbaAtiva}>
             <TabsList className="mb-6">
-              <TabsTrigger value="todas">Todas</TabsTrigger>
+              <TabsTrigger value="todas">Todas ({movimentacoes.length})</TabsTrigger>
               <TabsTrigger value="entradas">Entradas</TabsTrigger>
               <TabsTrigger value="saidas">Saídas</TabsTrigger>
             </TabsList>
 
-            <TabsContent value="todas">
-              <div className="space-y-4">
-                {movimentacoes.map((mov) => (
-                  <div key={mov.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-lg ${mov.tipo === "entrada" ? "bg-green-100" : "bg-red-100"}`}>
-                        {mov.tipo === "entrada" ? (
-                          <ArrowUpCircle className="w-6 h-6 text-green-600" />
-                        ) : (
-                          <ArrowDownCircle className="w-6 h-6 text-red-600" />
-                        )}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-800">{mov.produto}</h4>
-                        <p className="text-sm text-gray-500">
-                          {mov.canal} • {mov.responsavel}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant={mov.tipo === "entrada" ? "default" : "destructive"}>
-                        {mov.tipo === "entrada" ? "+" : "-"}{mov.quantidade} unidades
-                      </Badge>
-                      <p className="text-sm text-gray-500 mt-1">{new Date(mov.data).toLocaleDateString('pt-BR')}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
+            <TabsContent value={abaAtiva}>
+              {carregando ? (
+                <div className="space-y-3">
+                  {[1,2,3,4].map((i) => <Skeleton key={i} className="h-16 rounded-lg" />)}
+                </div>
+              ) : erro ? (
+                <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                  <AlertTriangle className="w-8 h-8 mb-2 text-red-400" />
+                  <p>{erro}</p>
+                </div>
+              ) : filtradas.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-40 text-gray-400">
+                  <Package className="w-8 h-8 mb-2" />
+                  <p>Nenhuma movimentação encontrada</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {filtradas.map((mov) => {
+                    const cfg = tipoConfig[mov.tipo] ?? tipoConfig.AJUSTE;
+                    const Icon = cfg.icon;
+                    const canal = mov.tipo === "ENTRADA"
+                      ? mov.localDestino?.nome
+                      : mov.localOrigem?.nome;
 
-            <TabsContent value="entradas">
-              <div className="space-y-4">
-                {movimentacoesEntrada.map((mov) => (
-                  <div key={mov.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-lg bg-green-100">
-                        <ArrowUpCircle className="w-6 h-6 text-green-600" />
+                    return (
+                      <div key={mov.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                        <div className="flex items-center gap-4">
+                          <div className={`p-3 rounded-lg ${cfg.bg}`}>
+                            <Icon className={`w-5 h-5 ${cfg.color}`} />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-gray-800 text-sm">{mov.produto?.nome}</h4>
+                            <p className="text-xs text-gray-500">
+                              {canal ?? "—"} {mov.responsavel ? `• ${mov.responsavel.nome}` : ""}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <Badge variant={cfg.badgeVariant}>
+                            {mov.tipo === "ENTRADA" ? "+" : mov.tipo === "SAIDA" ? "-" : ""}
+                            {mov.quantidade} un
+                          </Badge>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {new Date(mov.dataMovimentacao).toLocaleDateString("pt-BR")}
+                          </p>
+                          <Badge variant="outline" className="text-xs mt-1">
+                            {TIPO_LABEL[mov.tipo]}
+                          </Badge>
+                        </div>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-800">{mov.produto}</h4>
-                        <p className="text-sm text-gray-500">
-                          {mov.canal} • {mov.responsavel}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="default">+{mov.quantidade} unidades</Badge>
-                      <p className="text-sm text-gray-500 mt-1">{new Date(mov.data).toLocaleDateString('pt-BR')}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </TabsContent>
-
-            <TabsContent value="saidas">
-              <div className="space-y-4">
-                {movimentacoesSaida.map((mov) => (
-                  <div key={mov.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
-                    <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-lg bg-red-100">
-                        <ArrowDownCircle className="w-6 h-6 text-red-600" />
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-gray-800">{mov.produto}</h4>
-                        <p className="text-sm text-gray-500">
-                          {mov.canal} • {mov.responsavel}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <Badge variant="destructive">-{mov.quantidade} unidades</Badge>
-                      <p className="text-sm text-gray-500 mt-1">{new Date(mov.data).toLocaleDateString('pt-BR')}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </Card>

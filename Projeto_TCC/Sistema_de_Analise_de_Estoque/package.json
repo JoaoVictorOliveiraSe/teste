@@ -8,6 +8,11 @@
     "dev": "vite"
   },
   "dependencies": {
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "axios": "1.7.9",
+    "zustand": "5.0.3",
+    "@tanstack/react-query": "5.62.16",
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.1",
     "@mui/icons-material": "7.3.5",
@@ -66,21 +71,12 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
+    "@types/react": "18.3.20",
+    "@types/react-dom": "18.3.6",
     "@vitejs/plugin-react": "4.7.0",
     "tailwindcss": "4.1.12",
+    "typescript": "5.7.2",
     "vite": "6.3.5"
-  },
-  "peerDependencies": {
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
-  },
-  "peerDependenciesMeta": {
-    "react": {
-      "optional": true
-    },
-    "react-dom": {
-      "optional": true
-    }
   },
   "pnpm": {
     "overrides": {

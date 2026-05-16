@@ -1,75 +1,102 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-import { Sparkles, TrendingUp, AlertCircle, Lightbulb, BarChart3, Calendar } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Badge } from "./ui/badge";
+import { Skeleton } from "./ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import {
+  Sparkles, TrendingUp, AlertCircle, Lightbulb, BarChart3,
+  Calendar, RefreshCw, Clock, AlertTriangle, CheckCircle,
+} from "lucide-react";
+import {
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
+} from "recharts";
+import { toast } from "sonner";
+import { analiseService } from "../../services/analiseService";
+import type { AnaliseIA as AnaliseIAType, InsightIA, RecomendacaoIA } from "../../types";
+
+const INSIGHT_CONFIG: Record<string, {
+  icon: React.ElementType;
+  color: string;
+  bgColor: string;
+}> = {
+  tendencia: { icon: TrendingUp, color: "text-green-600", bgColor: "bg-green-50" },
+  alerta: { icon: AlertCircle, color: "text-red-600", bgColor: "bg-red-50" },
+  oportunidade: { icon: Lightbulb, color: "text-yellow-600", bgColor: "bg-yellow-50" },
+  performance: { icon: BarChart3, color: "text-blue-600", bgColor: "bg-blue-50" },
+};
+
+const PRIORIDADE_CONFIG: Record<string, "default" | "destructive" | "secondary" | "outline"> = {
+  critica: "destructive",
+  alta: "default",
+  media: "secondary",
+  baixa: "outline",
+};
+
+const PRIORIDADE_LABEL: Record<string, string> = {
+  critica: "Crítico",
+  alta: "Alta",
+  media: "Média",
+  baixa: "Baixa",
+};
+
+const IMPACTO_COLORS: Record<string, string> = {
+  alto: "bg-red-100 text-red-700",
+  medio: "bg-yellow-100 text-yellow-700",
+  baixo: "bg-green-100 text-green-700",
+};
+
+const PRAZO_LABELS: Record<string, string> = {
+  imediato: "Imediato",
+  curto: "Curto prazo",
+  medio: "Médio prazo",
+  longo: "Longo prazo",
+};
 
 export function AnaliseIA() {
-  const [periodoSelecionado, setPeriodoSelecionado] = useState("ultimo-mes");
-  const [analisando, setAnalisando] = useState(false);
+  const [analise, setAnalise] = useState<AnaliseIAType | null>(null);
+  const [carregando, setCarregando] = useState(false);
+  const [gerando, setGerando] = useState(false);
+  const [periodo, setPeriodo] = useState("ultimo-mes");
+  const [erro, setErro] = useState<string | null>(null);
 
-  const insights = [
-    {
-      tipo: "tendencia",
-      titulo: "Aumento nas Vendas Online",
-      descricao: "As vendas online cresceram 23% no último mês, superando a loja física. Recomenda-se aumentar o estoque destinado ao canal digital.",
-      prioridade: "alta",
-      icon: TrendingUp,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
-    },
-    {
-      tipo: "alerta",
-      titulo: "Estoque Baixo - Vestido Longo",
-      descricao: "O produto 'Vestido Longo' está com apenas 23 unidades em estoque. Com base no histórico de vendas, o estoque deve acabar em 12 dias.",
-      prioridade: "critica",
-      icon: AlertCircle,
-      color: "text-red-600",
-      bgColor: "bg-red-50",
-    },
-    {
-      tipo: "oportunidade",
-      titulo: "Melhor Período para Produção",
-      descricao: "Análise histórica indica que a demanda aumenta 35% entre maio e junho. Sugestão: aumentar produção de vestidos e blusas nas próximas 2 semanas.",
-      prioridade: "media",
-      icon: Lightbulb,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-50",
-    },
-    {
-      tipo: "performance",
-      titulo: "Produto Mais Rentável",
-      descricao: "A 'Blusa Estampada' apresenta a melhor relação custo-benefício com margem de 58% e alta rotatividade. Considere aumentar a produção deste modelo.",
-      prioridade: "media",
-      icon: BarChart3,
-      color: "text-blue-600",
-      bgColor: "bg-blue-50",
-    },
-  ];
-
-  const previsaoVendas = [
-    { mes: "Abr (Real)", lojaFisica: 342, online: 589, previsao: null },
-    { mes: "Mai", lojaFisica: null, online: null, previsao: 1050 },
-    { mes: "Jun", lojaFisica: null, online: null, previsao: 1180 },
-    { mes: "Jul", lojaFisica: null, online: null, previsao: 920 },
-    { mes: "Ago", lojaFisica: null, online: null, previsao: 1090 },
-  ];
-
-  const comparacaoPeriodos = [
-    { periodo: "Semana 1", atual: 245, anterior: 198 },
-    { periodo: "Semana 2", atual: 289, anterior: 234 },
-    { periodo: "Semana 3", atual: 312, anterior: 256 },
-    { periodo: "Semana 4", atual: 285, anterior: 221 },
-  ];
-
-  const handleAnalisar = () => {
-    setAnalisando(true);
-    setTimeout(() => {
-      setAnalisando(false);
-    }, 2000);
+  const carregarUltima = async () => {
+    setCarregando(true);
+    setErro(null);
+    try {
+      const data = await analiseService.getUltima();
+      setAnalise(data);
+    } catch (e: any) {
+      setErro(e.response?.data?.message ?? "Erro ao carregar análise");
+    } finally {
+      setCarregando(false);
+    }
   };
+
+  const handleGerarAnalise = async () => {
+    setGerando(true);
+    setErro(null);
+    try {
+      toast.info("Gerando análise com IA... isso pode levar alguns segundos");
+      const data = await analiseService.gerarAnalise(periodo);
+      setAnalise(data);
+      toast.success("Análise gerada com sucesso!");
+    } catch (e: any) {
+      const msg = e.response?.data?.message ?? "Erro ao gerar análise";
+      setErro(msg);
+      toast.error(msg);
+    } finally {
+      setGerando(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarUltima();
+  }, []);
+
+  const insights: InsightIA[] = Array.isArray(analise?.insights) ? analise.insights : [];
+  const previsoes = Array.isArray(analise?.previsoes) ? analise.previsoes : [];
+  const recomendacoes: RecomendacaoIA[] = Array.isArray(analise?.recomendacoes) ? analise.recomendacoes : [];
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
@@ -82,10 +109,16 @@ export function AnaliseIA() {
                 Análise com IA
               </h2>
               <p className="text-gray-600 mt-1">Insights inteligentes para tomada de decisão</p>
+              {analise?.criadoEm && (
+                <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  Última análise: {new Date(analise.criadoEm).toLocaleString("pt-BR")}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center gap-4">
-              <Select value={periodoSelecionado} onValueChange={setPeriodoSelecionado}>
+              <Select value={periodo} onValueChange={setPeriodo}>
                 <SelectTrigger className="w-48">
                   <SelectValue />
                 </SelectTrigger>
@@ -97,147 +130,196 @@ export function AnaliseIA() {
                 </SelectContent>
               </Select>
 
-              <Button
-                onClick={handleAnalisar}
-                className="bg-purple-500 hover:bg-purple-600 text-white"
-                disabled={analisando}
-              >
+              <Button onClick={handleGerarAnalise} className="bg-purple-500 hover:bg-purple-600 text-white" disabled={gerando}>
                 <Sparkles className="w-4 h-4 mr-2" />
-                {analisando ? "Analisando..." : "Analisar Dados"}
+                {gerando ? "Analisando..." : "Gerar Nova Análise"}
+              </Button>
+
+              <Button onClick={carregarUltima} variant="outline" disabled={carregando}>
+                <RefreshCw className={`w-4 h-4 ${carregando ? "animate-spin" : ""}`} />
               </Button>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          {insights.map((insight, index) => {
-            const Icon = insight.icon;
-            return (
-              <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start gap-4">
-                  <div className={`p-3 rounded-lg ${insight.bgColor}`}>
-                    <Icon className={`w-6 h-6 ${insight.color}`} />
+        {/* Contexto da análise */}
+        {analise?.contexto && (
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            {[
+              { label: "Produtos Analisados", value: analise.contexto.totalProdutos, icon: BarChart3, color: "text-blue-500" },
+              { label: "Total em Estoque", value: analise.contexto.totalEmEstoque, icon: TrendingUp, color: "text-green-500" },
+              { label: "Produtos Críticos", value: analise.contexto.produtosBaixoEstoque, icon: AlertCircle, color: "text-red-500" },
+              { label: "Valor em Estoque", value: `R$ ${analise.contexto.estoqueValorTotal?.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, icon: Sparkles, color: "text-purple-500" },
+            ].map((item, i) => {
+              const Icon = item.icon;
+              return (
+                <Card key={i} className="p-4">
+                  <div className="flex items-center gap-3">
+                    <Icon className={`w-5 h-5 ${item.color}`} />
+                    <div>
+                      <p className="text-xs text-gray-500">{item.label}</p>
+                      <p className="text-lg font-bold text-gray-800">{item.value}</p>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Estado de carregamento */}
+        {(carregando || gerando) && !analise && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {[1,2,3,4].map((i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
+          </div>
+        )}
+
+        {erro && !analise && (
+          <div className="flex flex-col items-center justify-center h-48 text-gray-400">
+            <AlertTriangle className="w-10 h-10 mb-2 text-red-400" />
+            <p className="text-gray-600">{erro}</p>
+            <Button onClick={handleGerarAnalise} className="mt-3 bg-purple-500 hover:bg-purple-600 text-white">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Gerar Análise
+            </Button>
+          </div>
+        )}
+
+        {/* Insights */}
+        {insights.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            {insights.map((insight, index) => {
+              const cfg = INSIGHT_CONFIG[insight.tipo] ?? INSIGHT_CONFIG.performance;
+              const Icon = cfg.icon;
+              return (
+                <Card key={index} className="p-6 hover:shadow-lg transition-shadow">
+                  <div className="flex items-start gap-4">
+                    <div className={`p-3 rounded-lg ${cfg.bgColor} flex-shrink-0`}>
+                      <Icon className={`w-6 h-6 ${cfg.color}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-2 gap-2">
+                        <h3 className="font-semibold text-gray-800 text-sm">{insight.titulo}</h3>
+                        <Badge variant={PRIORIDADE_CONFIG[insight.prioridade] ?? "secondary"} className="flex-shrink-0">
+                          {PRIORIDADE_LABEL[insight.prioridade] ?? insight.prioridade}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 leading-relaxed">{insight.descricao}</p>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Previsões */}
+        {previsoes.length > 0 && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Calendar className="w-5 h-5 text-purple-500" />
+                <h3 className="text-lg font-semibold text-gray-800">Previsão de Demanda (IA)</h3>
+              </div>
+              <ResponsiveContainer width="100%" height={280}>
+                <LineChart data={previsoes}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="mes" />
+                  <YAxis />
+                  <Tooltip formatter={(v) => [v, "Unidades previstas"]} />
+                  <Legend />
+                  <Line
+                    type="monotone"
+                    dataKey="totalPrevisto"
+                    stroke="#8b5cf6"
+                    name="Previsão IA"
+                    strokeWidth={2}
+                    strokeDasharray="5 5"
+                    dot={{ fill: "#8b5cf6", r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+              <p className="text-xs text-gray-500 mt-3">
+                Previsões baseadas em análise histórica de movimentações e sazonalidade.
+              </p>
+            </Card>
+
+            {/* Confiança das previsões */}
+            <Card className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="w-5 h-5 text-blue-500" />
+                <h3 className="text-lg font-semibold text-gray-800">Detalhes das Previsões</h3>
+              </div>
+              <div className="space-y-4">
+                {previsoes.map((prev, i) => (
+                  <div key={i} className="p-3 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-medium text-gray-800 text-sm">{prev.mes}</span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-purple-600 font-bold">{prev.totalPrevisto} un</span>
+                        <Badge variant="outline" className="text-xs">
+                          {prev.confianca}% confiança
+                        </Badge>
+                      </div>
+                    </div>
+                    {prev.fatores?.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-2">
+                        {prev.fatores.slice(0, 3).map((fator, fi) => (
+                          <span key={fi} className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">
+                            {fator}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* Recomendações */}
+        {recomendacoes.length > 0 && (
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">Recomendações Estratégicas da IA</h3>
+            <div className="space-y-4">
+              {recomendacoes.map((rec, i) => (
+                <div key={i} className="flex items-start gap-3 p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                  <div className="p-2 bg-purple-500 rounded-full mt-1 flex-shrink-0">
+                    <Sparkles className="w-4 h-4 text-white" />
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-semibold text-gray-800">{insight.titulo}</h3>
-                      <Badge
-                        variant={
-                          insight.prioridade === "critica"
-                            ? "destructive"
-                            : insight.prioridade === "alta"
-                            ? "default"
-                            : "secondary"
-                        }
-                      >
-                        {insight.prioridade === "critica"
-                          ? "Crítico"
-                          : insight.prioridade === "alta"
-                          ? "Alta"
-                          : "Média"}
-                      </Badge>
+                    <div className="flex items-start justify-between gap-2 mb-1">
+                      <h4 className="font-semibold text-gray-800 text-sm">{rec.titulo}</h4>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${IMPACTO_COLORS[rec.impacto] ?? "bg-gray-100 text-gray-700"}`}>
+                          {rec.impacto === "alto" ? "Alto impacto" : rec.impacto === "medio" ? "Médio impacto" : "Baixo impacto"}
+                        </span>
+                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                          {PRAZO_LABELS[rec.prazo] ?? rec.prazo}
+                        </span>
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-600">{insight.descricao}</p>
+                    <p className="text-sm text-gray-600">{rec.descricao}</p>
                   </div>
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <Calendar className="w-5 h-5 text-purple-500" />
-              <h3 className="text-lg font-semibold text-gray-800">Previsão de Vendas (IA)</h3>
+              ))}
             </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={previsaoVendas}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="mes" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="lojaFisica" stroke="#8b5cf6" name="Loja Física" strokeWidth={2} />
-                <Line type="monotone" dataKey="online" stroke="#3b82f6" name="Online" strokeWidth={2} />
-                <Line
-                  type="monotone"
-                  dataKey="previsao"
-                  stroke="#10b981"
-                  name="Previsão IA"
-                  strokeWidth={2}
-                  strokeDasharray="5 5"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-            <p className="text-sm text-gray-600 mt-4">
-              A IA prevê um aumento de vendas nos próximos meses, com pico em junho. Prepare o estoque com antecedência.
-            </p>
           </Card>
+        )}
 
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <BarChart3 className="w-5 h-5 text-blue-500" />
-              <h3 className="text-lg font-semibold text-gray-800">Comparação de Períodos</h3>
-            </div>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={comparacaoPeriodos}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="periodo" />
-                <YAxis />
-                <Tooltip />
-                <Line type="monotone" dataKey="atual" stroke="#3b82f6" name="Período Atual" strokeWidth={2} />
-                <Line type="monotone" dataKey="anterior" stroke="#94a3b8" name="Período Anterior" strokeWidth={2} />
-              </LineChart>
-            </ResponsiveContainer>
-            <p className="text-sm text-gray-600 mt-4">
-              As vendas do período atual estão 18% acima do período anterior, indicando crescimento consistente.
-            </p>
-          </Card>
-        </div>
-
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">Recomendações da IA</h3>
-          <div className="space-y-4">
-            <div className="flex items-start gap-3 p-4 bg-purple-50 rounded-lg">
-              <div className="p-2 bg-purple-500 rounded-full mt-1">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-800 mb-1">Otimização de Estoque por Canal</h4>
-                <p className="text-sm text-gray-600">
-                  Com base nos padrões de venda, recomenda-se redistribuir: 40% para Online, 35% para Revendedores e 25%
-                  para Loja Física.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-4 bg-blue-50 rounded-lg">
-              <div className="p-2 bg-blue-500 rounded-full mt-1">
-                <Lightbulb className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-800 mb-1">Produtos para Aumentar Produção</h4>
-                <p className="text-sm text-gray-600">
-                  Vestidos Florais e Blusas Estampadas apresentam alta demanda e boa margem. Sugestão: aumentar produção
-                  em 30%.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-4 bg-green-50 rounded-lg">
-              <div className="p-2 bg-green-500 rounded-full mt-1">
-                <TrendingUp className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex-1">
-                <h4 className="font-semibold text-gray-800 mb-1">Estratégia de Precificação</h4>
-                <p className="text-sm text-gray-600">
-                  Análise de elasticidade indica que é possível aumentar preços em 5-8% nos produtos de alta demanda sem
-                  impactar vendas.
-                </p>
-              </div>
-            </div>
+        {/* Estado vazio — sem análise anterior */}
+        {!carregando && !gerando && !analise && !erro && (
+          <div className="flex flex-col items-center justify-center h-64">
+            <Sparkles className="w-16 h-16 text-purple-300 mb-4" />
+            <h3 className="text-lg font-semibold text-gray-700 mb-2">Nenhuma análise disponível</h3>
+            <p className="text-gray-500 text-sm mb-4">Clique em "Gerar Nova Análise" para iniciar</p>
+            <Button onClick={handleGerarAnalise} className="bg-purple-500 hover:bg-purple-600 text-white">
+              <Sparkles className="w-4 h-4 mr-2" />
+              Gerar Análise com IA
+            </Button>
           </div>
-        </Card>
+        )}
       </div>
     </div>
   );

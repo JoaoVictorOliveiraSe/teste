@@ -1,71 +1,196 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { Plus, Search, Edit, Trash2, Package } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { Label } from "./ui/label";
+import { Badge } from "./ui/badge";
+import { Skeleton } from "./ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { Plus, Search, Edit, Trash2, Package, AlertTriangle, RefreshCw } from "lucide-react";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+} from "./ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "./ui/alert-dialog";
+import { toast } from "sonner";
+import { useProdutosStore } from "../../store/produtosStore";
+import { categoriasService } from "../../services/categoriasService";
+import type { Categoria, CreateProdutoDto, Produto } from "../../types";
 
-interface Produto {
-  id: number;
-  codigo: string;
-  nome: string;
-  categoria: string;
-  estoque: number;
-  precoVenda: number;
-  precoProducao: number;
+function ProdutoFormDialog({
+  produto,
+  categorias,
+  onSalvar,
+  trigger,
+}: {
+  produto?: Produto;
+  categorias: Categoria[];
+  onSalvar: (dto: CreateProdutoDto) => Promise<void>;
+  trigger: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+  const [form, setForm] = useState<CreateProdutoDto>({
+    sku: produto?.sku ?? "",
+    nome: produto?.nome ?? "",
+    descricao: produto?.descricao ?? "",
+    categoriaId: produto?.categoriaId ?? "",
+    precoVenda: produto?.precoVenda ?? 0,
+    precoCusto: produto?.precoCusto ?? 0,
+    estoqueMinimo: produto?.estoqueMinimo ?? 5,
+  });
+
+  const handleSalvar = async () => {
+    if (!form.sku || !form.nome || !form.categoriaId) {
+      toast.error("Preencha os campos obrigatórios");
+      return;
+    }
+    setSalvando(true);
+    try {
+      await onSalvar(form);
+      setOpen(false);
+      toast.success(produto ? "Produto atualizado!" : "Produto criado!");
+    } catch (e: any) {
+      toast.error(e.response?.data?.message ?? "Erro ao salvar produto");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>{produto ? "Editar Produto" : "Cadastrar Novo Produto"}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>SKU *</Label>
+              <Input
+                placeholder="Ex: VE001"
+                value={form.sku}
+                onChange={(e) => setForm({ ...form, sku: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Estoque Mínimo</Label>
+              <Input
+                type="number"
+                value={form.estoqueMinimo}
+                onChange={(e) => setForm({ ...form, estoqueMinimo: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+          <div>
+            <Label>Nome *</Label>
+            <Input
+              placeholder="Ex: Vestido Floral"
+              value={form.nome}
+              onChange={(e) => setForm({ ...form, nome: e.target.value })}
+            />
+          </div>
+          <div>
+            <Label>Categoria *</Label>
+            <Select value={form.categoriaId} onValueChange={(v) => setForm({ ...form, categoriaId: v })}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione..." />
+              </SelectTrigger>
+              <SelectContent>
+                {categorias.map((c) => (
+                  <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Label>Descrição</Label>
+            <Input
+              placeholder="Descrição opcional"
+              value={form.descricao}
+              onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Preço de Venda (R$) *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form.precoVenda}
+                onChange={(e) => setForm({ ...form, precoVenda: Number(e.target.value) })}
+              />
+            </div>
+            <div>
+              <Label>Custo de Produção (R$) *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={form.precoCusto}
+                onChange={(e) => setForm({ ...form, precoCusto: Number(e.target.value) })}
+              />
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
+          <Button onClick={handleSalvar} disabled={salvando} className="bg-blue-500 hover:bg-blue-600">
+            {salvando ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
 }
 
 export function Produtos() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [produtos, setProdutos] = useState<Produto[]>([
-    { id: 1, codigo: "VE001", nome: "Vestido Floral", categoria: "Vestidos", estoque: 45, precoVenda: 89.90, precoProducao: 35.00 },
-    { id: 2, codigo: "BL002", nome: "Blusa Básica", categoria: "Blusas", estoque: 78, precoVenda: 49.90, precoProducao: 20.00 },
-    { id: 3, codigo: "SK003", nome: "Saia Midi", categoria: "Saias", estoque: 32, precoVenda: 69.90, precoProducao: 28.00 },
-    { id: 4, codigo: "CA004", nome: "Calça Jeans", categoria: "Calças", estoque: 56, precoVenda: 129.90, precoProducao: 55.00 },
-    { id: 5, codigo: "VE005", nome: "Vestido Longo", categoria: "Vestidos", estoque: 23, precoVenda: 149.90, precoProducao: 60.00 },
-    { id: 6, codigo: "BL006", nome: "Blusa Estampada", categoria: "Blusas", estoque: 67, precoVenda: 59.90, precoProducao: 25.00 },
-    { id: 7, codigo: "SK007", nome: "Saia Plissada", categoria: "Saias", estoque: 41, precoVenda: 79.90, precoProducao: 32.00 },
-    { id: 8, codigo: "CA008", nome: "Calça Social", categoria: "Calças", estoque: 29, precoVenda: 119.90, precoProducao: 50.00 },
-    { id: 9, codigo: "VE009", nome: "Vestido Curto", categoria: "Vestidos", estoque: 38, precoVenda: 79.90, precoProducao: 30.00 },
-    { id: 10, codigo: "BL010", nome: "Blusa Listrada", categoria: "Blusas", estoque: 52, precoVenda: 54.90, precoProducao: 22.00 },
-  ]);
+  const { produtos, carregando, erro, termoBusca, setTermoBusca, carregarProdutos, criarProduto, atualizarProduto, removerProduto } = useProdutosStore();
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
+  const [produtoParaRemover, setProdutoParaRemover] = useState<Produto | null>(null);
 
-  const [novoProduto, setNovoProduto] = useState({
-    codigo: "",
-    nome: "",
-    categoria: "",
-    estoque: 0,
-    precoVenda: 0,
-    precoProducao: 0,
+  useEffect(() => {
+    carregarProdutos();
+    categoriasService.listar().then(setCategorias).catch(() => {});
+  }, []);
+
+  const filtrados = produtos.filter((p) => {
+    const termo = termoBusca.toLowerCase();
+    return (
+      p.nome.toLowerCase().includes(termo) ||
+      p.sku.toLowerCase().includes(termo) ||
+      p.categoria?.nome?.toLowerCase().includes(termo)
+    );
   });
 
-  const filteredProdutos = produtos.filter(
-    (produto) =>
-      produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      produto.codigo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      produto.categoria.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const handleAddProduto = () => {
-    const novo: Produto = {
-      id: produtos.length + 1,
-      ...novoProduto,
-    };
-    setProdutos([...produtos, novo]);
-    setNovoProduto({
-      codigo: "",
-      nome: "",
-      categoria: "",
-      estoque: 0,
-      precoVenda: 0,
-      precoProducao: 0,
-    });
+  const handleCriar = async (dto: CreateProdutoDto) => {
+    await criarProduto(dto);
   };
 
-  const handleDeleteProduto = (id: number) => {
-    setProdutos(produtos.filter((p) => p.id !== id));
+  const handleAtualizar = (produto: Produto) => async (dto: CreateProdutoDto) => {
+    await atualizarProduto(produto.id, dto);
   };
+
+  const handleRemover = async () => {
+    if (!produtoParaRemover) return;
+    try {
+      await removerProduto(produtoParaRemover.id);
+      toast.success("Produto removido");
+      setProdutoParaRemover(null);
+    } catch (e: any) {
+      toast.error(e.response?.data?.message ?? "Erro ao remover produto");
+    }
+  };
+
+  const calcMargem = (precoVenda: number, precoCusto: number) => {
+    if (precoVenda <= 0) return 0;
+    return (((precoVenda - precoCusto) / precoVenda) * 100).toFixed(1);
+  };
+
+  const totalEstoque = (produto: Produto) =>
+    produto.estoques?.reduce((acc, e) => acc + e.quantidadeDisponivel, 0) ?? 0;
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50">
@@ -73,145 +198,147 @@ export function Produtos() {
         <div className="mb-8 flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold text-gray-800">Produtos</h2>
-            <p className="text-gray-600 mt-1">Gerencie o catálogo de produtos</p>
+            <p className="text-gray-600 mt-1">
+              {filtrados.length} de {produtos.length} produtos
+            </p>
           </div>
-
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button className="bg-blue-500 hover:bg-blue-600 text-white">
-                <Plus className="w-4 h-4 mr-2" />
-                Novo Produto
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Cadastrar Novo Produto</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 mt-4">
-                <div>
-                  <Label>Código</Label>
-                  <Input
-                    placeholder="Ex: VE001"
-                    value={novoProduto.codigo}
-                    onChange={(e) => setNovoProduto({ ...novoProduto, codigo: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Nome</Label>
-                  <Input
-                    placeholder="Ex: Vestido Floral"
-                    value={novoProduto.nome}
-                    onChange={(e) => setNovoProduto({ ...novoProduto, nome: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Categoria</Label>
-                  <Input
-                    placeholder="Ex: Vestidos"
-                    value={novoProduto.categoria}
-                    onChange={(e) => setNovoProduto({ ...novoProduto, categoria: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label>Estoque Inicial</Label>
-                  <Input
-                    type="number"
-                    placeholder="0"
-                    value={novoProduto.estoque}
-                    onChange={(e) => setNovoProduto({ ...novoProduto, estoque: Number(e.target.value) })}
-                  />
-                </div>
-                <div>
-                  <Label>Preço de Venda (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={novoProduto.precoVenda}
-                    onChange={(e) => setNovoProduto({ ...novoProduto, precoVenda: Number(e.target.value) })}
-                  />
-                </div>
-                <div>
-                  <Label>Custo de Produção (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={novoProduto.precoProducao}
-                    onChange={(e) => setNovoProduto({ ...novoProduto, precoProducao: Number(e.target.value) })}
-                  />
-                </div>
-                <Button onClick={handleAddProduto} className="w-full bg-blue-500 hover:bg-blue-600">
-                  Cadastrar Produto
+          <div className="flex gap-3">
+            <Button onClick={() => carregarProdutos()} variant="outline" disabled={carregando}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${carregando ? "animate-spin" : ""}`} />
+              Atualizar
+            </Button>
+            <ProdutoFormDialog
+              categorias={categorias}
+              onSalvar={handleCriar}
+              trigger={
+                <Button className="bg-blue-500 hover:bg-blue-600 text-white">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Novo Produto
                 </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              }
+            />
+          </div>
         </div>
 
         <Card className="mb-6 p-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
             <Input
               className="pl-10"
-              placeholder="Buscar por código, nome ou categoria..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar por SKU, nome ou categoria..."
+              value={termoBusca}
+              onChange={(e) => setTermoBusca(e.target.value)}
             />
           </div>
         </Card>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredProdutos.map((produto) => (
-            <Card key={produto.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-blue-100 rounded-lg">
-                    <Package className="w-6 h-6 text-blue-500" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{produto.nome}</h3>
-                    <p className="text-sm text-gray-500">{produto.codigo}</p>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="ghost" size="sm">
-                    <Edit className="w-4 h-4 text-gray-600" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleDeleteProduto(produto.id)}>
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
-                </div>
-              </div>
+        {carregando && produtos.length === 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1,2,3,4,5,6].map((i) => <Skeleton key={i} className="h-64 rounded-xl" />)}
+          </div>
+        ) : erro ? (
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+            <AlertTriangle className="w-10 h-10 mb-2 text-red-400" />
+            <p>{erro}</p>
+            <Button onClick={() => carregarProdutos()} variant="outline" className="mt-3">Tentar novamente</Button>
+          </div>
+        ) : filtrados.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-gray-400">
+            <Package className="w-10 h-10 mb-2" />
+            <p>Nenhum produto encontrado</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {filtrados.map((produto) => {
+              const total = totalEstoque(produto);
+              const critico = total <= produto.estoqueMinimo;
 
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Categoria:</span>
-                  <span className="font-medium text-gray-800">{produto.categoria}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Estoque:</span>
-                  <span className="font-medium text-gray-800">{produto.estoque} unidades</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Preço Venda:</span>
-                  <span className="font-medium text-green-600">R$ {produto.precoVenda.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Custo Produção:</span>
-                  <span className="font-medium text-orange-600">R$ {produto.precoProducao.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm pt-2 border-t">
-                  <span className="text-gray-600">Margem:</span>
-                  <span className="font-bold text-blue-600">
-                    {(((produto.precoVenda - produto.precoProducao) / produto.precoVenda) * 100).toFixed(1)}%
-                  </span>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+              return (
+                <Card key={produto.id} className={`p-6 hover:shadow-lg transition-shadow ${critico ? "border-red-200" : ""}`}>
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-3 rounded-lg ${critico ? "bg-red-100" : "bg-blue-100"}`}>
+                        <Package className={`w-6 h-6 ${critico ? "text-red-500" : "text-blue-500"}`} />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-gray-800">{produto.nome}</h3>
+                        <p className="text-sm text-gray-500">{produto.sku}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-1">
+                      <ProdutoFormDialog
+                        produto={produto}
+                        categorias={categorias}
+                        onSalvar={handleAtualizar(produto)}
+                        trigger={
+                          <Button variant="ghost" size="sm">
+                            <Edit className="w-4 h-4 text-gray-600" />
+                          </Button>
+                        }
+                      />
+                      <Button variant="ghost" size="sm" onClick={() => setProdutoParaRemover(produto)}>
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Categoria:</span>
+                      <Badge variant="secondary">{produto.categoria?.nome}</Badge>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Estoque Total:</span>
+                      <span className={`font-medium ${critico ? "text-red-600" : "text-gray-800"}`}>
+                        {total} un {critico && "⚠"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Estoque Mínimo:</span>
+                      <span className="text-gray-600">{produto.estoqueMinimo} un</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Preço Venda:</span>
+                      <span className="font-medium text-green-600">
+                        R$ {Number(produto.precoVenda).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Custo Produção:</span>
+                      <span className="font-medium text-orange-600">
+                        R$ {Number(produto.precoCusto).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm pt-2 border-t">
+                      <span className="text-gray-600">Margem:</span>
+                      <span className="font-bold text-blue-600">
+                        {calcMargem(Number(produto.precoVenda), Number(produto.precoCusto))}%
+                      </span>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
+
+      <AlertDialog open={!!produtoParaRemover} onOpenChange={(v) => !v && setProdutoParaRemover(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover produto?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja remover o produto <strong>{produtoParaRemover?.nome}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemover} className="bg-red-500 hover:bg-red-600">
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
